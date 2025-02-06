@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction
+
+      - name: Check code formatting (Black)
+        run: poetry run black --check .
+
+      - name: Run mypy
+        run: poetry run mypy --install-types --non-interactive google_sheet_client/
+
+      - name: Run pylint
+        run: poetry run pylint --disable=missing-module-docstring google_sheet_client/
+
+      - name: Run tests
+        run: poetry run pytest
+
+      - name: Run tests coverage
+        run: poetry run pytest --cov=google_sheet_client --cov-branch --cov-report=term-missing --cov-fail-under=90
